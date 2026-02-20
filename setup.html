@@ -241,7 +241,7 @@
         // Initialize
         document.addEventListener('DOMContentLoaded', async () => {
             if (!token) {
-                showError();
+                showError('invalid');
                 return;
             }
 
@@ -250,7 +250,17 @@
                 const response = await fetch(`${API_URL}/api/setup?token=${token}`);
 
                 if (!response.ok) {
-                    showError();
+                    const errorData = await response.json().catch(() => ({}));
+                    console.log('Error response:', response.status, errorData);
+
+                    // Show specific error message based on error type
+                    if (errorData.error === 'Token expired') {
+                        showError('expired');
+                    } else if (errorData.error === 'User not found') {
+                        showError('user_not_found');
+                    } else {
+                        showError('invalid');
+                    }
                     return;
                 }
 
@@ -279,9 +289,36 @@
             }
         });
 
-        function showError() {
+        function showError(type = 'invalid') {
             document.getElementById('loading-state').classList.add('hidden');
             document.getElementById('error-state').classList.remove('hidden');
+
+            const errorTitle = document.getElementById('error-title');
+            const errorDesc = document.getElementById('error-description');
+
+            const errors = {
+                expired: {
+                    en: { title: 'Link expired', desc: 'This link has expired. Type "configure categories" on WhatsApp to get a new link.' },
+                    es: { title: 'Link expirado', desc: 'Este link ha expirado. Escribe "configurar categorías" en WhatsApp para obtener uno nuevo.' },
+                    pt: { title: 'Link expirado', desc: 'Este link expirou. Digite "configurar categorias" no WhatsApp para obter um novo.' },
+                },
+                user_not_found: {
+                    en: { title: 'User not found', desc: 'Send any message to Monedita on WhatsApp first, then request the setup link again.' },
+                    es: { title: 'Usuario no encontrado', desc: 'Primero envía cualquier mensaje a Monedita en WhatsApp, luego pide el link de configuración nuevamente.' },
+                    pt: { title: 'Usuário não encontrado', desc: 'Primeiro envie qualquer mensagem para Monedita no WhatsApp, depois peça o link de configuração novamente.' },
+                },
+                invalid: {
+                    en: { title: 'Invalid link', desc: 'This link is not valid. Type "configure categories" on WhatsApp to get a valid link.' },
+                    es: { title: 'Link inválido', desc: 'Este link no es válido. Escribe "configurar categorías" en WhatsApp para obtener uno válido.' },
+                    pt: { title: 'Link inválido', desc: 'Este link não é válido. Digite "configurar categorias" no WhatsApp para obter um válido.' },
+                },
+            };
+
+            const lang = currentLang || 'es';
+            const errorContent = errors[type]?.[lang] || errors[type]?.es || errors.invalid.es;
+
+            errorTitle.textContent = errorContent.title;
+            errorDesc.textContent = errorContent.desc;
         }
 
         function showMain() {
