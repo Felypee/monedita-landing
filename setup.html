@@ -56,10 +56,6 @@
             border-color: #8b5cf6;
             background: rgba(139, 92, 246, 0.1);
         }
-        .budget-input:focus {
-            outline: none;
-            border-color: #8b5cf6;
-        }
         .custom-checkbox {
             appearance: none;
             width: 20px;
@@ -80,8 +76,31 @@
     <!-- Animated Background -->
     <div class="animated-bg"></div>
 
+    <!-- Loading State -->
+    <div id="loading-state" class="relative z-10 min-h-screen flex items-center justify-center">
+        <div class="text-center">
+            <div class="text-4xl mb-4 animate-bounce">💰</div>
+            <p class="text-gray-400">Cargando...</p>
+        </div>
+    </div>
+
+    <!-- Error State (no token) -->
+    <div id="error-state" class="hidden relative z-10 min-h-screen flex items-center justify-center px-4">
+        <div class="text-center max-w-md">
+            <div class="text-6xl mb-4">🔗</div>
+            <h1 class="text-2xl font-bold mb-4" id="error-title">Link inválido o expirado</h1>
+            <p class="text-gray-400 mb-6" id="error-description">
+                Para configurar tus categorías, escribe "configurar categorías" en WhatsApp y te enviaremos un nuevo link.
+            </p>
+            <a href="https://wa.me/573001234567?text=configurar%20categor%C3%ADas"
+               class="inline-block bg-whatsapp hover:bg-whatsapp-dark text-white font-semibold py-3 px-6 rounded-xl transition-colors">
+                Abrir WhatsApp
+            </a>
+        </div>
+    </div>
+
     <!-- Main Content -->
-    <div class="relative z-10 min-h-screen py-8 px-4">
+    <div id="main-content" class="hidden relative z-10 min-h-screen py-8 px-4">
         <div class="max-w-2xl mx-auto">
             <!-- Header -->
             <div class="text-center mb-8">
@@ -94,36 +113,10 @@
                 <p class="text-gray-400" id="subtitle">Configura tus categorías y presupuestos</p>
             </div>
 
-            <!-- Phone Input -->
-            <div class="bg-white/5 backdrop-blur-lg rounded-2xl p-6 mb-6 border border-white/10">
-                <label class="block text-sm font-medium text-gray-300 mb-2" id="phone-label">
-                    Tu número de WhatsApp
-                </label>
-                <div class="flex gap-2">
-                    <select id="country-code" class="bg-white/10 border border-white/20 rounded-lg px-3 py-3 text-white focus:outline-none focus:border-purple-500">
-                        <option value="57">🇨🇴 +57</option>
-                        <option value="52">🇲🇽 +52</option>
-                        <option value="1">🇺🇸 +1</option>
-                        <option value="34">🇪🇸 +34</option>
-                        <option value="54">🇦🇷 +54</option>
-                        <option value="55">🇧🇷 +55</option>
-                        <option value="56">🇨🇱 +56</option>
-                        <option value="51">🇵🇪 +51</option>
-                    </select>
-                    <input
-                        type="tel"
-                        id="phone-number"
-                        placeholder="300 123 4567"
-                        class="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-purple-500"
-                    >
-                </div>
-                <p class="text-xs text-gray-500 mt-2" id="phone-hint">Ingresa el número que usas en WhatsApp</p>
-            </div>
-
             <!-- Categories Section -->
             <div class="bg-white/5 backdrop-blur-lg rounded-2xl p-6 mb-6 border border-white/10">
                 <h2 class="text-lg font-semibold mb-4 flex items-center gap-2" id="categories-title">
-                    <span>📂</span> Selecciona tus categorías
+                    <span>📂</span> <span id="categories-label">Selecciona tus categorías</span>
                 </h2>
 
                 <div id="categories-container" class="space-y-3">
@@ -157,7 +150,7 @@
                             onclick="addCustomCategory()"
                             class="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                         >
-                            + Agregar
+                            +
                         </button>
                     </div>
                 </div>
@@ -178,18 +171,11 @@
                 <div class="text-4xl mb-3">✅</div>
                 <h3 class="text-xl font-semibold text-green-400 mb-2" id="success-title">¡Configuración guardada!</h3>
                 <p class="text-gray-300" id="success-text">Ya puedes usar Monedita con tus categorías personalizadas.</p>
-                <a
-                    id="whatsapp-link"
-                    href="#"
-                    class="inline-block mt-4 bg-whatsapp hover:bg-whatsapp-dark text-white font-semibold py-3 px-6 rounded-xl transition-colors"
-                >
-                    <span id="open-whatsapp-text">Abrir WhatsApp</span> →
-                </a>
             </div>
 
-            <!-- Error Message (hidden by default) -->
-            <div id="error-message" class="hidden mt-4 bg-red-500/20 border border-red-500/30 rounded-xl p-4 text-center">
-                <p class="text-red-400" id="error-text"></p>
+            <!-- Save Error Message -->
+            <div id="save-error" class="hidden mt-4 bg-red-500/20 border border-red-500/30 rounded-xl p-4 text-center">
+                <p class="text-red-400" id="save-error-text"></p>
             </div>
         </div>
     </div>
@@ -197,153 +183,138 @@
     <script>
         // API endpoint
         const API_URL = 'https://monedita-backend.up.railway.app';
-        // const API_URL = 'http://localhost:3000'; // For local testing
+        // const API_URL = 'http://localhost:3000';
 
-        // WhatsApp bot number
-        const BOT_NUMBER = '573001234567'; // Replace with actual bot number
-
-        // Default categories by language
-        const CATEGORIES = {
-            en: [
-                { id: 'food', name: 'Food', emoji: '🍔' },
-                { id: 'transport', name: 'Transport', emoji: '🚗' },
-                { id: 'shopping', name: 'Shopping', emoji: '🛒' },
-                { id: 'entertainment', name: 'Entertainment', emoji: '🎬' },
-                { id: 'bills', name: 'Bills', emoji: '📄' },
-                { id: 'health', name: 'Health', emoji: '💊' },
-                { id: 'other', name: 'Other', emoji: '📦' },
-            ],
-            es: [
-                { id: 'comida', name: 'Comida', emoji: '🍔' },
-                { id: 'transporte', name: 'Transporte', emoji: '🚗' },
-                { id: 'compras', name: 'Compras', emoji: '🛒' },
-                { id: 'entretenimiento', name: 'Entretenimiento', emoji: '🎬' },
-                { id: 'servicios', name: 'Servicios', emoji: '📄' },
-                { id: 'salud', name: 'Salud', emoji: '💊' },
-                { id: 'otros', name: 'Otros', emoji: '📦' },
-            ],
-            pt: [
-                { id: 'comida', name: 'Comida', emoji: '🍔' },
-                { id: 'transporte', name: 'Transporte', emoji: '🚗' },
-                { id: 'compras', name: 'Compras', emoji: '🛒' },
-                { id: 'entretenimento', name: 'Entretenimento', emoji: '🎬' },
-                { id: 'contas', name: 'Contas', emoji: '📄' },
-                { id: 'saude', name: 'Saúde', emoji: '💊' },
-                { id: 'outros', name: 'Outros', emoji: '📦' },
-            ],
-        };
+        // Get token from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
 
         // UI translations
         const UI = {
             en: {
                 subtitle: 'Set up your categories and budgets',
-                phoneLabel: 'Your WhatsApp number',
-                phoneHint: 'Enter the number you use on WhatsApp',
-                categoriesTitle: '📂 Select your categories',
+                categoriesLabel: 'Select your categories',
                 customCategoryTitle: '➕ Add custom category',
                 budgetPlaceholder: 'Budget',
                 saveButton: 'Save Configuration',
                 successTitle: 'Configuration saved!',
                 successText: 'You can now use Monedita with your custom categories.',
-                openWhatsapp: 'Open WhatsApp',
-                errorPhone: 'Please enter a valid phone number',
+                errorTitle: 'Invalid or expired link',
+                errorDescription: 'To configure your categories, type "configure categories" on WhatsApp and we\'ll send you a new link.',
                 errorCategories: 'Please select at least one category',
                 errorSave: 'Error saving. Please try again.',
             },
             es: {
                 subtitle: 'Configura tus categorías y presupuestos',
-                phoneLabel: 'Tu número de WhatsApp',
-                phoneHint: 'Ingresa el número que usas en WhatsApp',
-                categoriesTitle: '📂 Selecciona tus categorías',
+                categoriesLabel: 'Selecciona tus categorías',
                 customCategoryTitle: '➕ Agregar categoría personalizada',
                 budgetPlaceholder: 'Presupuesto',
                 saveButton: 'Guardar Configuración',
                 successTitle: '¡Configuración guardada!',
                 successText: 'Ya puedes usar Monedita con tus categorías personalizadas.',
-                openWhatsapp: 'Abrir WhatsApp',
-                errorPhone: 'Por favor ingresa un número válido',
+                errorTitle: 'Link inválido o expirado',
+                errorDescription: 'Para configurar tus categorías, escribe "configurar categorías" en WhatsApp y te enviaremos un nuevo link.',
                 errorCategories: 'Por favor selecciona al menos una categoría',
                 errorSave: 'Error al guardar. Por favor intenta de nuevo.',
             },
             pt: {
                 subtitle: 'Configure suas categorias e orçamentos',
-                phoneLabel: 'Seu número do WhatsApp',
-                phoneHint: 'Digite o número que você usa no WhatsApp',
-                categoriesTitle: '📂 Selecione suas categorias',
+                categoriesLabel: 'Selecione suas categorias',
                 customCategoryTitle: '➕ Adicionar categoria personalizada',
                 budgetPlaceholder: 'Orçamento',
                 saveButton: 'Salvar Configuração',
                 successTitle: 'Configuração salva!',
                 successText: 'Agora você pode usar o Monedita com suas categorias personalizadas.',
-                openWhatsapp: 'Abrir WhatsApp',
-                errorPhone: 'Por favor, digite um número válido',
+                errorTitle: 'Link inválido ou expirado',
+                errorDescription: 'Para configurar suas categorias, digite "configurar categorias" no WhatsApp e enviaremos um novo link.',
                 errorCategories: 'Por favor, selecione pelo menos uma categoria',
                 errorSave: 'Erro ao salvar. Por favor, tente novamente.',
             },
         };
 
-        // Current language
+        // Current state
         let currentLang = 'es';
         let customCategories = [];
+        let defaultCategories = [];
+        let existingBudgets = [];
 
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            // Detect language from URL or browser
-            const urlParams = new URLSearchParams(window.location.search);
-            const langParam = urlParams.get('lang');
-            if (langParam && CATEGORIES[langParam]) {
-                currentLang = langParam;
-            } else {
-                // Detect from browser
-                const browserLang = navigator.language.split('-')[0];
-                if (CATEGORIES[browserLang]) {
-                    currentLang = browserLang;
-                }
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!token) {
+                showError();
+                return;
             }
 
-            // Update UI language
-            updateUILanguage();
+            try {
+                // Fetch user's current setup
+                const response = await fetch(`${API_URL}/api/setup?token=${token}`);
 
-            // Load categories
-            renderCategories();
-
-            // Listen for country code changes to update language
-            document.getElementById('country-code').addEventListener('change', (e) => {
-                const code = e.target.value;
-                if (['57', '52', '34', '54', '56', '51', '58', '593'].includes(code)) {
-                    currentLang = 'es';
-                } else if (code === '55') {
-                    currentLang = 'pt';
-                } else {
-                    currentLang = 'en';
+                if (!response.ok) {
+                    showError();
+                    return;
                 }
+
+                const data = await response.json();
+                currentLang = data.language || 'es';
+                existingBudgets = data.budgets || [];
+
+                // Fetch default categories for language
+                const catResponse = await fetch(`${API_URL}/api/setup/categories?lang=${currentLang}`);
+                const catData = await catResponse.json();
+                defaultCategories = catData.categories;
+
+                // If user has custom categories, use those
+                if (data.categories && data.categories.length > 0) {
+                    defaultCategories = data.categories;
+                }
+
+                // Update UI
                 updateUILanguage();
                 renderCategories();
-            });
+                showMain();
+
+            } catch (error) {
+                console.error('Error loading setup:', error);
+                showError();
+            }
         });
 
+        function showError() {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('error-state').classList.remove('hidden');
+        }
+
+        function showMain() {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+        }
+
         function updateUILanguage() {
-            const ui = UI[currentLang] || UI.en;
+            const ui = UI[currentLang] || UI.es;
             document.documentElement.lang = currentLang;
             document.getElementById('subtitle').textContent = ui.subtitle;
-            document.getElementById('phone-label').textContent = ui.phoneLabel;
-            document.getElementById('phone-hint').textContent = ui.phoneHint;
-            document.getElementById('categories-title').innerHTML = ui.categoriesTitle;
+            document.getElementById('categories-label').textContent = ui.categoriesLabel;
             document.getElementById('custom-category-title').textContent = ui.customCategoryTitle;
             document.getElementById('save-button-text').textContent = ui.saveButton;
             document.getElementById('success-title').textContent = ui.successTitle;
             document.getElementById('success-text').textContent = ui.successText;
-            document.getElementById('open-whatsapp-text').textContent = ui.openWhatsapp;
+            document.getElementById('error-title').textContent = ui.errorTitle;
+            document.getElementById('error-description').textContent = ui.errorDescription;
             document.getElementById('custom-budget').placeholder = ui.budgetPlaceholder;
         }
 
         function renderCategories() {
             const container = document.getElementById('categories-container');
-            const categories = [...(CATEGORIES[currentLang] || CATEGORIES.en), ...customCategories];
-            const ui = UI[currentLang] || UI.en;
+            const categories = [...defaultCategories, ...customCategories];
+            const ui = UI[currentLang] || UI.es;
 
-            container.innerHTML = categories.map((cat, index) => `
-                <div class="category-card bg-white/5 border border-white/10 rounded-xl p-4 flex items-center gap-4" data-id="${cat.id}">
+            container.innerHTML = categories.map((cat) => {
+                // Find existing budget for this category
+                const existingBudget = existingBudgets.find(b => b.category === cat.id);
+                const budgetValue = existingBudget ? existingBudget.amount : '';
+
+                return `
+                <div class="category-card selected bg-white/5 border border-purple-500/50 rounded-xl p-4 flex items-center gap-4" data-id="${cat.id}">
                     <input
                         type="checkbox"
                         id="cat-${cat.id}"
@@ -359,8 +330,9 @@
                         <input
                             type="number"
                             id="budget-${cat.id}"
+                            value="${budgetValue}"
                             placeholder="${ui.budgetPlaceholder}"
-                            class="budget-input w-28 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm placeholder-gray-500"
+                            class="w-28 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500"
                         >
                     </div>
                     ${cat.custom ? `
@@ -369,18 +341,35 @@
                         </button>
                     ` : ''}
                 </div>
-            `).join('');
+            `}).join('');
 
-            // Add click handler to cards
+            // Add click handler to toggle selection
             container.querySelectorAll('.category-card').forEach(card => {
+                const checkbox = card.querySelector('input[type="checkbox"]');
+
                 card.addEventListener('click', (e) => {
                     if (e.target.tagName !== 'INPUT') {
-                        const checkbox = card.querySelector('input[type="checkbox"]');
                         checkbox.checked = !checkbox.checked;
-                        card.classList.toggle('selected', checkbox.checked);
+                        updateCardStyle(card, checkbox.checked);
                     }
                 });
+
+                checkbox.addEventListener('change', () => {
+                    updateCardStyle(card, checkbox.checked);
+                });
             });
+        }
+
+        function updateCardStyle(card, isSelected) {
+            if (isSelected) {
+                card.classList.add('selected');
+                card.classList.remove('border-white/10');
+                card.classList.add('border-purple-500/50');
+            } else {
+                card.classList.remove('selected');
+                card.classList.add('border-white/10');
+                card.classList.remove('border-purple-500/50');
+            }
         }
 
         function addCustomCategory() {
@@ -396,27 +385,28 @@
             const id = name.toLowerCase().replace(/\s+/g, '_');
 
             // Check if already exists
-            if (customCategories.find(c => c.id === id)) return;
+            if (customCategories.find(c => c.id === id) || defaultCategories.find(c => c.id === id)) {
+                return;
+            }
 
             customCategories.push({
                 id,
                 name,
                 emoji,
-                budget: budgetInput.value || null,
                 custom: true,
             });
 
             // Clear inputs
             nameInput.value = '';
             emojiInput.value = '';
-            budgetInput.value = '';
 
             // Re-render
             renderCategories();
 
-            // Set the budget value if provided
+            // Set budget if provided
             if (budgetInput.value) {
                 document.getElementById(`budget-${id}`).value = budgetInput.value;
+                budgetInput.value = '';
             }
         }
 
@@ -426,29 +416,16 @@
         }
 
         async function saveConfiguration() {
-            const ui = UI[currentLang] || UI.en;
-            const errorDiv = document.getElementById('error-message');
-            const errorText = document.getElementById('error-text');
+            const ui = UI[currentLang] || UI.es;
+            const errorDiv = document.getElementById('save-error');
+            const errorText = document.getElementById('save-error-text');
             const saveButton = document.getElementById('save-button');
 
-            // Hide previous errors
             errorDiv.classList.add('hidden');
 
-            // Get phone number
-            const countryCode = document.getElementById('country-code').value;
-            const phoneNumber = document.getElementById('phone-number').value.replace(/\D/g, '');
-
-            if (!phoneNumber || phoneNumber.length < 7) {
-                errorText.textContent = ui.errorPhone;
-                errorDiv.classList.remove('hidden');
-                return;
-            }
-
-            const fullPhone = countryCode + phoneNumber;
-
-            // Get selected categories with budgets
+            // Collect selected categories
             const categories = [];
-            const allCategories = [...(CATEGORIES[currentLang] || CATEGORIES.en), ...customCategories];
+            const allCategories = [...defaultCategories, ...customCategories];
 
             allCategories.forEach(cat => {
                 const checkbox = document.getElementById(`cat-${cat.id}`);
@@ -459,7 +436,7 @@
                         id: cat.id,
                         name: cat.name,
                         emoji: cat.emoji,
-                        budget: budgetInput.value ? parseFloat(budgetInput.value) : null,
+                        budget: budgetInput?.value ? parseFloat(budgetInput.value) : null,
                     });
                 }
             });
@@ -470,42 +447,30 @@
                 return;
             }
 
-            // Show loading state
+            // Show loading
             saveButton.disabled = true;
-            saveButton.innerHTML = '<span class="animate-spin">⏳</span> <span>Guardando...</span>';
+            saveButton.innerHTML = '<span class="animate-spin">⏳</span>';
 
             try {
-                const response = await fetch(`${API_URL}/api/setup`, {
+                const response = await fetch(`${API_URL}/api/setup?token=${token}`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        phone: fullPhone,
-                        categories,
-                    }),
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ categories }),
                 });
 
-                const data = await response.json();
-
                 if (!response.ok) {
-                    throw new Error(data.error || 'Error saving');
+                    throw new Error('Save failed');
                 }
 
-                // Show success message
+                // Show success
                 document.getElementById('success-message').classList.remove('hidden');
                 saveButton.classList.add('hidden');
-
-                // Update WhatsApp link
-                const whatsappLink = document.getElementById('whatsapp-link');
-                whatsappLink.href = `https://wa.me/${BOT_NUMBER}?text=Hola%20Monedita!`;
 
             } catch (error) {
                 console.error('Error:', error);
                 errorText.textContent = ui.errorSave;
                 errorDiv.classList.remove('hidden');
             } finally {
-                // Reset button
                 saveButton.disabled = false;
                 saveButton.innerHTML = `<span>💾</span> <span>${ui.saveButton}</span>`;
             }
