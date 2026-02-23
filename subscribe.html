@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suscribirse a Monedita</title>
+    <meta name="description" content="Activa tu suscripción a Monedita con pago seguro.">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Wompi Widget -->
+    <script src="https://checkout.wompi.co/widget.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        whatsapp: '#25D366',
+                        'whatsapp-dark': '#128C7E',
+                        wompi: '#00C389',
+                        'wompi-dark': '#00A070',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .animated-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+        }
+        .animated-bg::before {
+            content: '';
+            position: absolute;
+            inset: -50%;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 50%);
+            animation: gradientShift 20s ease-in-out infinite;
+        }
+        @keyframes gradientShift {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-5%, 10%); }
+        }
+        .plan-card {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+        .wompi-form input {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 8px;
+            padding: 12px 16px;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .wompi-form input:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            background: rgba(255, 255, 255, 0.15);
+        }
+        .wompi-form input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .security-badge {
+            background: rgba(0, 195, 137, 0.1);
+            border: 1px solid rgba(0, 195, 137, 0.3);
+        }
+        @keyframes pulse-green {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(0, 195, 137, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(0, 195, 137, 0); }
+        }
+        .pulse-green {
+            animation: pulse-green 2s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen font-sans text-white">
+    <!-- Animated Background -->
+    <div class="animated-bg"></div>
+
+    <!-- Loading State -->
+    <div id="loading-state" class="relative z-10 min-h-screen flex items-center justify-center">
+        <div class="text-center">
+            <div class="text-4xl mb-4 animate-bounce">💳</div>
+            <p class="text-gray-400" id="loading-text">Cargando...</p>
+        </div>
+    </div>
+
+    <!-- Error State -->
+    <div id="error-state" class="hidden relative z-10 min-h-screen flex items-center justify-center px-4">
+        <div class="text-center max-w-md">
+            <div class="text-6xl mb-4">🔗</div>
+            <h1 class="text-2xl font-bold mb-4" id="error-title">Link inválido o expirado</h1>
+            <p class="text-gray-400 mb-6" id="error-description">
+                Para suscribirte, escribe "upgrade" en WhatsApp y te enviaremos un nuevo link.
+            </p>
+            <a href="https://wa.me/573229467318?text=upgrade"
+               class="inline-block bg-whatsapp hover:bg-whatsapp-dark text-white font-semibold py-3 px-6 rounded-xl transition-colors">
+                Abrir WhatsApp
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-content" class="hidden relative z-10 min-h-screen py-8 px-4">
+        <div class="max-w-md mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-6">
+                <div class="flex items-center justify-center gap-3 mb-4">
+                    <span class="text-4xl">💰</span>
+                    <h1 class="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                        Monedita
+                    </h1>
+                </div>
+                <p class="text-gray-400" id="subtitle">Activa tu suscripción</p>
+            </div>
+
+            <!-- Plan Card -->
+            <div class="plan-card rounded-2xl p-6 mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <span class="text-2xl mr-2" id="plan-icon">🚀</span>
+                        <span class="text-xl font-bold" id="plan-name">Premium</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-bold text-purple-400" id="plan-price">$52,000</div>
+                        <div class="text-sm text-gray-400" id="plan-period">/mes</div>
+                    </div>
+                </div>
+                <p class="text-gray-300 text-sm" id="plan-description">3,500 moneditas/mes, 12 meses historial</p>
+                <div class="mt-4 pt-4 border-t border-white/10 flex items-center gap-2 text-sm text-gray-400">
+                    <span>👤</span>
+                    <span id="user-name">Usuario</span>
+                </div>
+            </div>
+
+            <!-- Card Form -->
+            <div class="bg-white/5 backdrop-blur-lg rounded-2xl p-6 mb-6 border border-white/10">
+                <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <span>💳</span>
+                    <span id="card-title">Datos de tu tarjeta</span>
+                </h2>
+
+                <form id="card-form" class="wompi-form space-y-4">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2" id="label-number">Número de tarjeta</label>
+                        <input
+                            type="text"
+                            id="card-number"
+                            placeholder="1234 5678 9012 3456"
+                            maxlength="19"
+                            inputmode="numeric"
+                            autocomplete="cc-number"
+                            required
+                        >
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2" id="label-expiry">Vencimiento</label>
+                            <input
+                                type="text"
+                                id="card-expiry"
+                                placeholder="MM/AA"
+                                maxlength="5"
+                                inputmode="numeric"
+                                autocomplete="cc-exp"
+                                required
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">CVC</label>
+                            <input
+                                type="text"
+                                id="card-cvc"
+                                placeholder="123"
+                                maxlength="4"
+                                inputmode="numeric"
+                                autocomplete="cc-csc"
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2" id="label-name">Nombre en la tarjeta</label>
+                        <input
+                            type="text"
+                            id="card-holder"
+                            placeholder="NOMBRE APELLIDO"
+                            autocomplete="cc-name"
+                            required
+                        >
+                    </div>
+                </form>
+
+                <!-- Terms -->
+                <div class="mt-6 flex items-start gap-3">
+                    <input
+                        type="checkbox"
+                        id="accept-terms"
+                        class="mt-1 w-5 h-5 rounded border-gray-600 bg-white/10 text-purple-600 focus:ring-purple-500"
+                    >
+                    <label for="accept-terms" class="text-sm text-gray-400">
+                        <span id="terms-text">Acepto los</span>
+                        <a href="/terms.html" target="_blank" class="text-purple-400 hover:underline" id="terms-link">términos y condiciones</a>
+                        <span id="terms-and">y la</span>
+                        <a href="/privacy.html" target="_blank" class="text-purple-400 hover:underline" id="privacy-link">política de privacidad</a>.
+                        <span id="terms-auto" class="block mt-1">Mi tarjeta será cobrada automáticamente cada mes. Puedo cancelar cuando quiera.</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Security Badge -->
+            <div class="security-badge rounded-xl p-4 mb-6 flex items-center gap-3">
+                <div class="w-10 h-10 bg-wompi/20 rounded-full flex items-center justify-center pulse-green">
+                    <span class="text-wompi text-xl">🔒</span>
+                </div>
+                <div>
+                    <div class="font-medium text-wompi" id="security-title">Pago 100% seguro</div>
+                    <div class="text-sm text-gray-400" id="security-text">Procesado por Wompi. Tus datos están protegidos.</div>
+                </div>
+            </div>
+
+            <!-- Subscribe Button -->
+            <button
+                id="subscribe-button"
+                onclick="handleSubscribe()"
+                disabled
+                class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed text-white font-semibold py-4 px-6 rounded-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+            >
+                <span>💳</span>
+                <span id="subscribe-button-text">Suscribirme</span>
+            </button>
+
+            <!-- Error Message -->
+            <div id="error-message" class="hidden mt-4 bg-red-500/20 border border-red-500/30 rounded-xl p-4 text-center">
+                <p class="text-red-400" id="error-message-text"></p>
+            </div>
+
+            <!-- Success State -->
+            <div id="success-state" class="hidden mt-6 bg-green-500/20 border border-green-500/30 rounded-xl p-6 text-center">
+                <div class="text-4xl mb-3">✅</div>
+                <h3 class="text-xl font-semibold text-green-400 mb-2" id="success-title">¡Suscripción activada!</h3>
+                <p class="text-gray-300 mb-4" id="success-text">Tu plan ya está activo. ¡Gracias por confiar en Monedita!</p>
+                <a href="https://wa.me/573229467318"
+                   class="inline-block bg-whatsapp hover:bg-whatsapp-dark text-white font-semibold py-3 px-6 rounded-xl transition-colors">
+                    <span id="back-button-text">Volver a WhatsApp</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API endpoint
+        const API_URL = 'https://budget-agent-production.up.railway.app';
+        // const API_URL = 'http://localhost:3000';
+
+        // Get token from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+
+        // State
+        let subscriptionData = null;
+
+        // UI translations
+        const UI = {
+            es: {
+                loading: 'Cargando...',
+                subtitle: 'Activa tu suscripción',
+                cardTitle: 'Datos de tu tarjeta',
+                labelNumber: 'Número de tarjeta',
+                labelExpiry: 'Vencimiento',
+                labelName: 'Nombre en la tarjeta',
+                termsText: 'Acepto los',
+                termsLink: 'términos y condiciones',
+                termsAnd: 'y la',
+                privacyLink: 'política de privacidad',
+                termsAuto: 'Mi tarjeta será cobrada automáticamente cada mes. Puedo cancelar cuando quiera.',
+                securityTitle: 'Pago 100% seguro',
+                securityText: 'Procesado por Wompi. Tus datos están protegidos.',
+                subscribeButton: 'Suscribirme',
+                processing: 'Procesando...',
+                successTitle: '¡Suscripción activada!',
+                successText: 'Tu plan ya está activo. ¡Gracias por confiar en Monedita!',
+                backButton: 'Volver a WhatsApp',
+                errorTitle: 'Link inválido o expirado',
+                errorDescription: 'Para suscribirte, escribe "upgrade" en WhatsApp y te enviaremos un nuevo link.',
+                errorTerms: 'Debes aceptar los términos y condiciones',
+                errorCard: 'Por favor completa todos los datos de la tarjeta',
+                errorTokenize: 'Error al procesar la tarjeta. Verifica los datos.',
+                errorCharge: 'Error al procesar el pago. Intenta con otra tarjeta.',
+                perMonth: '/mes',
+            },
+            en: {
+                loading: 'Loading...',
+                subtitle: 'Activate your subscription',
+                cardTitle: 'Card details',
+                labelNumber: 'Card number',
+                labelExpiry: 'Expiry',
+                labelName: 'Name on card',
+                termsText: 'I accept the',
+                termsLink: 'terms and conditions',
+                termsAnd: 'and the',
+                privacyLink: 'privacy policy',
+                termsAuto: 'My card will be charged automatically every month. I can cancel anytime.',
+                securityTitle: '100% secure payment',
+                securityText: 'Processed by Wompi. Your data is protected.',
+                subscribeButton: 'Subscribe',
+                processing: 'Processing...',
+                successTitle: 'Subscription activated!',
+                successText: 'Your plan is now active. Thanks for trusting Monedita!',
+                backButton: 'Back to WhatsApp',
+                errorTitle: 'Invalid or expired link',
+                errorDescription: 'To subscribe, type "upgrade" on WhatsApp and we\'ll send you a new link.',
+                errorTerms: 'You must accept the terms and conditions',
+                errorCard: 'Please fill in all card details',
+                errorTokenize: 'Error processing card. Please check the details.',
+                errorCharge: 'Error processing payment. Try a different card.',
+                perMonth: '/month',
+            },
+            pt: {
+                loading: 'Carregando...',
+                subtitle: 'Ative sua assinatura',
+                cardTitle: 'Dados do cartão',
+                labelNumber: 'Número do cartão',
+                labelExpiry: 'Validade',
+                labelName: 'Nome no cartão',
+                termsText: 'Aceito os',
+                termsLink: 'termos e condições',
+                termsAnd: 'e a',
+                privacyLink: 'política de privacidade',
+                termsAuto: 'Meu cartão será cobrado automaticamente todo mês. Posso cancelar quando quiser.',
+                securityTitle: 'Pagamento 100% seguro',
+                securityText: 'Processado por Wompi. Seus dados estão protegidos.',
+                subscribeButton: 'Assinar',
+                processing: 'Processando...',
+                successTitle: 'Assinatura ativada!',
+                successText: 'Seu plano já está ativo. Obrigado por confiar no Monedita!',
+                backButton: 'Voltar ao WhatsApp',
+                errorTitle: 'Link inválido ou expirado',
+                errorDescription: 'Para assinar, digite "upgrade" no WhatsApp e enviaremos um novo link.',
+                errorTerms: 'Você deve aceitar os termos e condições',
+                errorCard: 'Por favor, preencha todos os dados do cartão',
+                errorTokenize: 'Erro ao processar o cartão. Verifique os dados.',
+                errorCharge: 'Erro ao processar o pagamento. Tente outro cartão.',
+                perMonth: '/mês',
+            },
+        };
+
+        let currentLang = 'es';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!token) {
+                showError();
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/subscribe?token=${token}`);
+
+                if (!response.ok) {
+                    showError();
+                    return;
+                }
+
+                subscriptionData = await response.json();
+                currentLang = detectLanguage(subscriptionData.phone);
+
+                updateUI();
+                setupCardInputs();
+                showMain();
+
+            } catch (error) {
+                console.error('Error loading subscription:', error);
+                showError();
+            }
+        });
+
+        function detectLanguage(phone) {
+            // Detect language from phone country code
+            if (phone.startsWith('55')) return 'pt'; // Brazil
+            if (phone.startsWith('1')) return 'en';  // US/Canada
+            return 'es'; // Default Spanish for LATAM
+        }
+
+        function showError() {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('error-state').classList.remove('hidden');
+
+            const ui = UI[currentLang];
+            document.getElementById('error-title').textContent = ui.errorTitle;
+            document.getElementById('error-description').textContent = ui.errorDescription;
+        }
+
+        function showMain() {
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('main-content').classList.remove('hidden');
+        }
+
+        function updateUI() {
+            const ui = UI[currentLang];
+            const data = subscriptionData;
+
+            // Update text
+            document.getElementById('subtitle').textContent = ui.subtitle;
+            document.getElementById('card-title').textContent = ui.cardTitle;
+            document.getElementById('label-number').textContent = ui.labelNumber;
+            document.getElementById('label-expiry').textContent = ui.labelExpiry;
+            document.getElementById('label-name').textContent = ui.labelName;
+            document.getElementById('terms-text').textContent = ui.termsText;
+            document.getElementById('terms-link').textContent = ui.termsLink;
+            document.getElementById('terms-and').textContent = ui.termsAnd;
+            document.getElementById('privacy-link').textContent = ui.privacyLink;
+            document.getElementById('terms-auto').textContent = ui.termsAuto;
+            document.getElementById('security-title').textContent = ui.securityTitle;
+            document.getElementById('security-text').textContent = ui.securityText;
+            document.getElementById('subscribe-button-text').textContent = ui.subscribeButton;
+            document.getElementById('success-title').textContent = ui.successTitle;
+            document.getElementById('success-text').textContent = ui.successText;
+            document.getElementById('back-button-text').textContent = ui.backButton;
+
+            // Update plan info
+            document.getElementById('plan-name').textContent = data.plan.name;
+            document.getElementById('plan-price').textContent = data.plan.priceFormatted;
+            document.getElementById('plan-period').textContent = ui.perMonth;
+            document.getElementById('plan-description').textContent = data.plan.description;
+            document.getElementById('plan-icon').textContent = data.plan.id === 'premium' ? '🚀' : '📦';
+            document.getElementById('user-name').textContent = data.userName;
+
+            // Pre-fill card holder name
+            document.getElementById('card-holder').value = data.userName.toUpperCase();
+        }
+
+        function setupCardInputs() {
+            const cardNumber = document.getElementById('card-number');
+            const cardExpiry = document.getElementById('card-expiry');
+            const cardCvc = document.getElementById('card-cvc');
+            const acceptTerms = document.getElementById('accept-terms');
+            const subscribeButton = document.getElementById('subscribe-button');
+
+            // Format card number with spaces
+            cardNumber.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/\D/g, '');
+                value = value.replace(/(.{4})/g, '$1 ').trim();
+                e.target.value = value.substring(0, 19);
+                checkForm();
+            });
+
+            // Format expiry MM/YY
+            cardExpiry.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/\D/g, '');
+                if (value.length >= 2) {
+                    value = value.substring(0, 2) + '/' + value.substring(2, 4);
+                }
+                e.target.value = value;
+                checkForm();
+            });
+
+            // Limit CVC
+            cardCvc.addEventListener('input', (e) => {
+                e.target.value = e.target.value.replace(/\D/g, '').substring(0, 4);
+                checkForm();
+            });
+
+            // Terms checkbox
+            acceptTerms.addEventListener('change', checkForm);
+
+            // Card holder
+            document.getElementById('card-holder').addEventListener('input', checkForm);
+        }
+
+        function checkForm() {
+            const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
+            const cardExpiry = document.getElementById('card-expiry').value;
+            const cardCvc = document.getElementById('card-cvc').value;
+            const cardHolder = document.getElementById('card-holder').value;
+            const acceptTerms = document.getElementById('accept-terms').checked;
+
+            const isValid = cardNumber.length >= 15 &&
+                            cardExpiry.length === 5 &&
+                            cardCvc.length >= 3 &&
+                            cardHolder.length >= 3 &&
+                            acceptTerms;
+
+            document.getElementById('subscribe-button').disabled = !isValid;
+        }
+
+        async function handleSubscribe() {
+            const ui = UI[currentLang];
+            const errorDiv = document.getElementById('error-message');
+            const errorText = document.getElementById('error-message-text');
+            const subscribeButton = document.getElementById('subscribe-button');
+            const buttonText = document.getElementById('subscribe-button-text');
+
+            errorDiv.classList.add('hidden');
+
+            // Validate terms
+            if (!document.getElementById('accept-terms').checked) {
+                errorText.textContent = ui.errorTerms;
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            // Get card data
+            const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
+            const cardExpiry = document.getElementById('card-expiry').value;
+            const cardCvc = document.getElementById('card-cvc').value;
+            const cardHolder = document.getElementById('card-holder').value;
+
+            if (!cardNumber || !cardExpiry || !cardCvc || !cardHolder) {
+                errorText.textContent = ui.errorCard;
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            // Parse expiry
+            const [expMonth, expYear] = cardExpiry.split('/');
+
+            // Show loading
+            subscribeButton.disabled = true;
+            buttonText.textContent = ui.processing;
+
+            try {
+                // Step 1: Tokenize card with Wompi
+                const cardToken = await tokenizeCard({
+                    number: cardNumber,
+                    exp_month: expMonth,
+                    exp_year: '20' + expYear,
+                    cvc: cardCvc,
+                    card_holder: cardHolder,
+                });
+
+                if (!cardToken) {
+                    throw new Error('tokenize_failed');
+                }
+
+                // Step 2: Send token to backend to create payment source
+                const tokenizeResponse = await fetch(`${API_URL}/api/subscribe/tokenize?token=${token}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        cardToken,
+                        cardInfo: {
+                            lastFour: cardNumber.slice(-4),
+                            brand: detectCardBrand(cardNumber),
+                        },
+                    }),
+                });
+
+                if (!tokenizeResponse.ok) {
+                    const err = await tokenizeResponse.json();
+                    throw new Error(err.error || 'tokenize_failed');
+                }
+
+                // Step 3: Charge first payment
+                const chargeResponse = await fetch(`${API_URL}/api/subscribe/charge?token=${token}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+
+                if (!chargeResponse.ok) {
+                    const err = await chargeResponse.json();
+                    throw new Error(err.error || 'charge_failed');
+                }
+
+                // Success!
+                showSuccess();
+
+            } catch (error) {
+                console.error('Subscription error:', error);
+
+                if (error.message === 'tokenize_failed' || error.message.includes('token')) {
+                    errorText.textContent = ui.errorTokenize;
+                } else {
+                    errorText.textContent = ui.errorCharge;
+                }
+                errorDiv.classList.remove('hidden');
+
+                // Reset button
+                subscribeButton.disabled = false;
+                buttonText.textContent = ui.subscribeButton;
+            }
+        }
+
+        async function tokenizeCard(cardData) {
+            const publicKey = subscriptionData.wompiConfig.publicKey;
+
+            // Determine API URL based on public key (sandbox vs production)
+            const isSandbox = publicKey.includes('test');
+            const wompiUrl = isSandbox
+                ? 'https://sandbox.wompi.co/v1/tokens/cards'
+                : 'https://production.wompi.co/v1/tokens/cards';
+
+            try {
+                const response = await fetch(wompiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${publicKey}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(cardData),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || data.error) {
+                    console.error('Wompi tokenize error:', data);
+                    return null;
+                }
+
+                return data.data.id;
+            } catch (error) {
+                console.error('Tokenize error:', error);
+                return null;
+            }
+        }
+
+        function detectCardBrand(number) {
+            if (/^4/.test(number)) return 'VISA';
+            if (/^5[1-5]/.test(number)) return 'MASTERCARD';
+            if (/^3[47]/.test(number)) return 'AMEX';
+            if (/^6011/.test(number)) return 'DISCOVER';
+            return 'UNKNOWN';
+        }
+
+        function showSuccess() {
+            document.getElementById('card-form').parentElement.classList.add('hidden');
+            document.getElementById('subscribe-button').classList.add('hidden');
+            document.getElementById('success-state').classList.remove('hidden');
+
+            // Scroll to success
+            document.getElementById('success-state').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
