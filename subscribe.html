@@ -534,13 +534,15 @@
 
             try {
                 // Step 1: Tokenize card with Wompi
-                const cardToken = await tokenizeCard({
+                const cardData = {
                     number: cardNumber,
                     exp_month: expMonth,
-                    exp_year: expYear,  // Wompi expects 2 digits (e.g., "28" not "2028")
+                    exp_year: expYear,
                     cvc: cardCvc,
                     card_holder: cardHolder,
-                });
+                };
+                console.log('Sending to Wompi:', JSON.stringify(cardData, null, 2));
+                const cardToken = await tokenizeCard(cardData);
 
                 if (!cardToken) {
                     throw new Error('tokenize_failed');
