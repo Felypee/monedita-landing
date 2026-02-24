@@ -187,8 +187,8 @@
           throw new Error(data.error || 'No se pudo obtener el token');
         }
 
-        // Redirect to Belvo's hosted widget
-        const belvoUrl = new URL('https://connect.belvo.com/connect');
+        // Redirect to Belvo's hosted widget (sandbox for now)
+        const belvoUrl = new URL('https://connect.sandbox.belvo.com/');
         belvoUrl.searchParams.set('access_token', data.token);
         belvoUrl.searchParams.set('institution_types', 'retail');
         belvoUrl.searchParams.set('country_codes', 'CO,MX,BR');
