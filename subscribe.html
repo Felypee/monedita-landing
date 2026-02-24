@@ -491,7 +491,7 @@
             const isValid = cardNumber.length >= 15 &&
                             cardExpiry.length === 5 &&
                             cardCvc.length >= 3 &&
-                            cardHolder.length >= 3 &&
+                            cardHolder.length >= 5 &&  // Wompi requires min 5 chars
                             acceptTerms;
 
             document.getElementById('subscribe-button').disabled = !isValid;
