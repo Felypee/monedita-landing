@@ -156,8 +156,20 @@
     const sessionId = urlParams.get('session');
 
     const statusEl = document.getElementById('status');
+    const widgetEl = document.getElementById('belvo-widget');
 
-    if (!phone && !sessionId) {
+    // Check if Belvo SDK loaded
+    if (typeof belvoSDK === 'undefined') {
+      statusEl.innerHTML = `
+        <div class="error">
+          Error cargando el widget bancario.<br>
+          Por favor, intenta de nuevo o usa otro navegador.
+        </div>
+        <a href="https://wa.me/${WHATSAPP_NUMBER}" class="whatsapp-btn">
+          📱 Volver a WhatsApp
+        </a>
+      `;
+    } else if (!phone && !sessionId) {
       statusEl.innerHTML = `
         <div class="error">
           Link inválido o expirado.<br><br>
@@ -173,34 +185,24 @@
 
     async function initWidget() {
       try {
-        console.log('Fetching widget token...');
-        console.log('Session:', sessionId, 'Phone:', phone);
-
         // Fetch widget token from our API
         const response = await fetch(`${API_URL}/api/bank/widget-token?phone=${phone || ''}&session=${sessionId || ''}`);
-
-        console.log('Response status:', response.status);
-
         const data = await response.json();
-        console.log('Response data:', data);
 
         if (!response.ok || !data.token) {
           throw new Error(data.error || 'No se pudo obtener el token');
         }
 
-        console.log('Token received, initializing Belvo widget...');
-
         statusEl.style.display = 'none';
 
-        // Initialize Belvo widget
-        const config = {
+        // Initialize Belvo widget using the correct method
+        // See: https://developers.belvo.com/docs/connect-widget
+        belvoSDK.createWidget(data.token, {
           locale: 'es',
           company_name: 'Monedita',
           country_codes: ['CO', 'MX', 'BR'],
-          access_mode: 'recurrent',
-          callback: (link, institution) => {
-            console.log('Link created:', link, institution);
-            document.getElementById('belvo-widget').style.display = 'none';
+          callback: function(link, institution) {
+            widgetEl.style.display = 'none';
             statusEl.style.display = 'block';
             statusEl.innerHTML = `
               <div class="success">
@@ -212,9 +214,8 @@
               </a>
             `;
           },
-          onExit: (data) => {
-            console.log('Widget closed:', data);
-            if (!data || data.meta?.completed === false) {
+          onExit: function(data) {
+            if (!data || !data.link) {
               statusEl.style.display = 'block';
               statusEl.innerHTML = `
                 <div class="error">
@@ -227,23 +228,16 @@
               `;
             }
           },
-          onEvent: (event) => {
-            console.log('Widget event:', event);
+          onEvent: function(event) {
+            console.log('Belvo event:', event);
           }
-        };
-
-        // Create and build widget
-        console.log('Creating Belvo widget with config:', config);
-        const widget = belvoSDK.createWidget(data.token, config);
-        console.log('Widget created:', widget);
-        widget.build();
-        console.log('Widget built successfully');
+        }).build();
 
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Widget error:', error);
         statusEl.innerHTML = `
           <div class="error">
-            ${error.message}<br><br>
+            ${error.message || 'Error de conexión'}<br><br>
             Por favor, solicita un nuevo link desde WhatsApp.
           </div>
           <a href="https://wa.me/${WHATSAPP_NUMBER}?text=conectar%20banco" class="whatsapp-btn">
