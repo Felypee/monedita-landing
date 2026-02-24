@@ -140,6 +140,9 @@
         console.log('Belvo token (first 50):', token?.substring(0, 50));
 
         const config = {
+          // Country configuration
+          country_codes: ['CO', 'MX', 'BR'],
+
           // Callbacks (required)
           callback: (link, institution) => {
             console.log('Belvo success:', link, institution);
