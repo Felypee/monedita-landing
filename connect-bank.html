@@ -207,47 +207,51 @@
         debugInfo.innerHTML = `Token: ${data.token.substring(0, 50)}...`;
         statusEl.parentNode.insertBefore(debugInfo, statusEl);
 
-        // Initialize Belvo widget using the correct method
-        // See: https://developers.belvo.com/docs/connect-widget
-        const widget = belvoSDK.createWidget(data.token, {
-          locale: 'es',
-          company_name: 'Monedita',
-          country_codes: ['CO', 'MX', 'BR'],
-          callback: function(link, institution) {
-            widgetEl.style.display = 'none';
+        // Initialize Belvo widget
+        debugInfo.innerHTML += '<br>Creando widget...';
+
+        const successCallback = function(link, institution) {
+          widgetEl.style.display = 'none';
+          statusEl.style.display = 'block';
+          statusEl.innerHTML = `
+            <div class="success">
+              <strong>✅ ¡Banco conectado!</strong>
+              ${institution} se ha vinculado correctamente a tu cuenta de Monedita.
+            </div>
+            <a href="https://wa.me/${WHATSAPP_NUMBER}?text=sincronizar%20banco" class="whatsapp-btn">
+              📱 Sincronizar transacciones
+            </a>
+          `;
+        };
+
+        const exitCallback = function(data) {
+          if (!data || !data.link) {
             statusEl.style.display = 'block';
             statusEl.innerHTML = `
-              <div class="success">
-                <strong>✅ ¡Banco conectado!</strong>
-                ${institution} se ha vinculado correctamente a tu cuenta de Monedita.
+              <div class="error">
+                Conexión cancelada.<br>
+                Puedes intentar de nuevo cuando quieras.
               </div>
-              <a href="https://wa.me/${WHATSAPP_NUMBER}?text=sincronizar%20banco" class="whatsapp-btn">
-                📱 Sincronizar transacciones
+              <a href="https://wa.me/${WHATSAPP_NUMBER}" class="whatsapp-btn">
+                📱 Volver a WhatsApp
               </a>
             `;
-          },
-          onExit: function(data) {
-            if (!data || !data.link) {
-              statusEl.style.display = 'block';
-              statusEl.innerHTML = `
-                <div class="error">
-                  Conexión cancelada.<br>
-                  Puedes intentar de nuevo cuando quieras.
-                </div>
-                <a href="https://wa.me/${WHATSAPP_NUMBER}" class="whatsapp-btn">
-                  📱 Volver a WhatsApp
-                </a>
-              `;
-            }
-          },
-          onEvent: function(event) {
-            console.log('Belvo event:', event);
           }
-        });
+        };
 
-        debugInfo.innerHTML += '<br>Widget creado, construyendo...';
-        widget.build();
-        debugInfo.innerHTML += '<br>Widget construido OK';
+        const eventCallback = function(event) {
+          console.log('Belvo event:', event);
+          debugInfo.innerHTML += '<br>Evento: ' + JSON.stringify(event);
+        };
+
+        // Use belvoSDK.createWidget with proper configuration
+        belvoSDK.createWidget(data.token, {
+          callback: successCallback,
+          onExit: exitCallback,
+          onEvent: eventCallback
+        }).build();
+
+        debugInfo.innerHTML += '<br>Widget.build() llamado';
 
       } catch (error) {
         console.error('Widget error:', error);
