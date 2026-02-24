@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Banco Conectado - Monedita</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 16px;
+      padding: 40px 32px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+    .icon { font-size: 64px; margin-bottom: 20px; }
+    h1 { color: #2e7d32; font-size: 24px; margin-bottom: 12px; }
+    p { color: #666; line-height: 1.6; margin-bottom: 24px; }
+    .whatsapp-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #25D366;
+      color: white;
+      padding: 14px 28px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+      transition: background 0.2s;
+    }
+    .whatsapp-btn:hover { background: #128C7E; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">✅</div>
+    <h1>¡Banco Conectado!</h1>
+    <p>Tu cuenta bancaria se ha vinculado correctamente a Monedita.</p>
+    <p>Ahora puedes importar tus transacciones automáticamente.</p>
+    <a href="https://wa.me/573114740716?text=sincronizar%20banco" class="whatsapp-btn">
+      📱 Sincronizar transacciones
+    </a>
+  </div>
+</body>
+</html>

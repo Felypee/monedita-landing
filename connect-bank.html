@@ -135,17 +135,12 @@
       <span>Cargando conexión segura...</span>
     </div>
 
-    <div id="belvo-widget"></div>
-
     <div class="security-note">
       🔒 Conexión encriptada. Tus credenciales nunca se comparten.
     </div>
   </div>
 
   <a href="https://wa.me/573114740716" class="back-link">← Volver a WhatsApp</a>
-
-  <!-- Belvo Connect Widget SDK -->
-  <script src="https://cdn.belvo.io/belvo-widget-1-stable.js"></script>
 
   <script>
     const API_URL = 'https://budget-agent-production.up.railway.app';
@@ -156,20 +151,8 @@
     const sessionId = urlParams.get('session');
 
     const statusEl = document.getElementById('status');
-    const widgetEl = document.getElementById('belvo-widget');
 
-    // Check if Belvo SDK loaded
-    if (typeof belvoSDK === 'undefined') {
-      statusEl.innerHTML = `
-        <div class="error">
-          Error cargando el widget bancario.<br>
-          Por favor, intenta de nuevo o usa otro navegador.
-        </div>
-        <a href="https://wa.me/${WHATSAPP_NUMBER}" class="whatsapp-btn">
-          📱 Volver a WhatsApp
-        </a>
-      `;
-    } else if (!phone && !sessionId) {
+    if (!phone && !sessionId) {
       statusEl.innerHTML = `
         <div class="error">
           Link inválido o expirado.<br><br>
@@ -180,18 +163,23 @@
         </a>
       `;
     } else {
-      initWidget();
+      redirectToBelvo();
     }
 
-    async function initWidget() {
+    async function redirectToBelvo() {
       try {
+        statusEl.innerHTML = `
+          <div class="loading">
+            <div class="spinner"></div>
+            <span>Conectando con tu banco...</span>
+          </div>
+        `;
+
         // Fetch widget token from our API
         const response = await fetch(`${API_URL}/api/bank/widget-token?phone=${phone || ''}&session=${sessionId || ''}`, {
           method: 'GET',
           mode: 'cors',
-          headers: {
-            'Accept': 'application/json'
-          }
+          headers: { 'Accept': 'application/json' }
         });
         const data = await response.json();
 
@@ -199,69 +187,23 @@
           throw new Error(data.error || 'No se pudo obtener el token');
         }
 
-        statusEl.style.display = 'none';
+        // Redirect to Belvo's hosted widget
+        const belvoUrl = new URL('https://connect.belvo.com/connect');
+        belvoUrl.searchParams.set('access_token', data.token);
+        belvoUrl.searchParams.set('institution_types', 'retail');
+        belvoUrl.searchParams.set('country_codes', 'CO,MX,BR');
+        belvoUrl.searchParams.set('external_id', data.phone || phone);
+        belvoUrl.searchParams.set('redirect_uri', `https://monedita.app/bank-success.html?phone=${data.phone || phone}`);
 
-        // Show debug info
-        const debugInfo = document.createElement('div');
-        debugInfo.style.cssText = 'font-size:10px;color:#999;margin:10px 0;word-break:break-all;';
-        debugInfo.innerHTML = `Token: ${data.token.substring(0, 50)}...`;
-        statusEl.parentNode.insertBefore(debugInfo, statusEl);
-
-        // Initialize Belvo widget
-        debugInfo.innerHTML += '<br>Creando widget...';
-
-        const successCallback = function(link, institution) {
-          widgetEl.style.display = 'none';
-          statusEl.style.display = 'block';
-          statusEl.innerHTML = `
-            <div class="success">
-              <strong>✅ ¡Banco conectado!</strong>
-              ${institution} se ha vinculado correctamente a tu cuenta de Monedita.
-            </div>
-            <a href="https://wa.me/${WHATSAPP_NUMBER}?text=sincronizar%20banco" class="whatsapp-btn">
-              📱 Sincronizar transacciones
-            </a>
-          `;
-        };
-
-        const exitCallback = function(data) {
-          if (!data || !data.link) {
-            statusEl.style.display = 'block';
-            statusEl.innerHTML = `
-              <div class="error">
-                Conexión cancelada.<br>
-                Puedes intentar de nuevo cuando quieras.
-              </div>
-              <a href="https://wa.me/${WHATSAPP_NUMBER}" class="whatsapp-btn">
-                📱 Volver a WhatsApp
-              </a>
-            `;
-          }
-        };
-
-        const eventCallback = function(event) {
-          console.log('Belvo event:', event);
-          debugInfo.innerHTML += '<br>Evento: ' + JSON.stringify(event);
-        };
-
-        // Use belvoSDK.createWidget with proper configuration
-        belvoSDK.createWidget(data.token, {
-          callback: successCallback,
-          onExit: exitCallback,
-          onEvent: eventCallback
-        }).build();
-
-        debugInfo.innerHTML += '<br>Widget.build() llamado';
+        // Redirect to Belvo
+        window.location.href = belvoUrl.toString();
 
       } catch (error) {
-        console.error('Widget error:', error);
+        console.error('Error:', error);
         statusEl.innerHTML = `
           <div class="error">
-            <strong>Error:</strong><br>
-            ${error.message || 'Error desconocido'}<br><br>
-            <small style="word-break: break-all; color: #666;">
-              ${error.stack || error.toString()}
-            </small>
+            ${error.message || 'Error de conexión'}<br><br>
+            Por favor, solicita un nuevo link.
           </div>
           <a href="https://wa.me/${WHATSAPP_NUMBER}?text=conectar%20banco" class="whatsapp-btn">
             📱 Solicitar nuevo link
@@ -269,24 +211,6 @@
         `;
       }
     }
-
-    // Global error handler
-    window.onerror = function(msg, url, line, col, error) {
-      statusEl.innerHTML = `
-        <div class="error">
-          <strong>Error Global:</strong><br>
-          ${msg}<br>
-          Línea: ${line}<br><br>
-          <small style="word-break: break-all; color: #666;">
-            ${error ? error.stack : 'Sin detalles'}
-          </small>
-        </div>
-        <a href="https://wa.me/${WHATSAPP_NUMBER}?text=conectar%20banco" class="whatsapp-btn">
-          📱 Solicitar nuevo link
-        </a>
-      `;
-      return true;
-    };
   </script>
 </body>
 </html>
