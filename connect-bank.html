@@ -6,11 +6,7 @@
   <title>Conectar Banco - Monedita</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -30,98 +26,36 @@
       box-shadow: 0 10px 40px rgba(0,0,0,0.2);
       text-align: center;
     }
-    .logo {
-      font-size: 48px;
-      margin-bottom: 16px;
-    }
-    h1 {
-      color: #333;
-      font-size: 24px;
-      margin-bottom: 8px;
-    }
-    p {
-      color: #666;
-      margin-bottom: 24px;
-      line-height: 1.5;
-    }
-    .loading {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-    }
+    .logo { font-size: 48px; margin-bottom: 16px; }
+    h1 { color: #333; font-size: 24px; margin-bottom: 8px; }
+    p { color: #666; margin-bottom: 24px; line-height: 1.5; }
+    .loading { display: flex; flex-direction: column; align-items: center; gap: 16px; }
     .spinner {
-      width: 40px;
-      height: 40px;
+      width: 40px; height: 40px;
       border: 4px solid #f3f3f3;
       border-top: 4px solid #667eea;
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    .error {
-      background: #fee;
-      color: #c00;
-      padding: 16px;
-      border-radius: 8px;
-      margin-top: 16px;
-    }
-    .success {
-      background: #e8f5e9;
-      color: #2e7d32;
-      padding: 20px;
-      border-radius: 8px;
-      margin-top: 16px;
-    }
-    .success strong {
-      display: block;
-      font-size: 18px;
-      margin-bottom: 8px;
-    }
-    #belvo-widget {
-      min-height: 500px;
-      margin-top: 16px;
-    }
-    .back-link {
-      margin-top: 24px;
-      color: white;
-      text-decoration: none;
-      font-size: 14px;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .back-link:hover {
-      text-decoration: underline;
-    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .error { background: #fee; color: #c00; padding: 16px; border-radius: 8px; margin-top: 16px; }
+    .success { background: #e8f5e9; color: #2e7d32; padding: 20px; border-radius: 8px; margin-top: 16px; }
+    .success strong { display: block; font-size: 18px; margin-bottom: 8px; }
     .whatsapp-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: #25D366;
-      color: white;
-      padding: 12px 24px;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: 600;
-      margin-top: 16px;
-      transition: background 0.2s;
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #25D366; color: white;
+      padding: 12px 24px; border-radius: 8px;
+      text-decoration: none; font-weight: 600; margin-top: 16px;
     }
-    .whatsapp-btn:hover {
-      background: #128C7E;
+    .whatsapp-btn:hover { background: #128C7E; }
+    .security-note { font-size: 12px; color: #888; margin-top: 16px; }
+    .connect-btn {
+      background: #667eea; color: white; border: none;
+      padding: 16px 32px; border-radius: 8px; font-size: 16px;
+      font-weight: 600; cursor: pointer; margin-top: 16px;
     }
-    .security-note {
-      font-size: 12px;
-      color: #888;
-      margin-top: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
+    .connect-btn:hover { background: #5a6fd6; }
+    .debug { font-size: 10px; color: #999; margin-top: 10px; word-break: break-all; }
   </style>
 </head>
 <body>
@@ -129,57 +63,32 @@
     <div class="logo">🏦</div>
     <h1>Conecta tu Banco</h1>
     <p>Vincula tu cuenta bancaria de forma segura para importar tus gastos automáticamente.</p>
-
-    <div id="status" class="loading">
-      <div class="spinner"></div>
-      <span>Cargando conexión segura...</span>
-    </div>
-
-    <div class="security-note">
-      🔒 Conexión encriptada. Tus credenciales nunca se comparten.
-    </div>
+    <div id="status"></div>
+    <div class="security-note">🔒 Conexión encriptada</div>
   </div>
-
-  <a href="https://wa.me/573114740716" class="back-link">← Volver a WhatsApp</a>
 
   <script>
     const API_URL = 'https://budget-agent-production.up.railway.app';
     const WHATSAPP_NUMBER = '573114740716';
+    const statusEl = document.getElementById('status');
 
     const urlParams = new URLSearchParams(window.location.search);
     const phone = urlParams.get('phone');
     const sessionId = urlParams.get('session');
 
-    const statusEl = document.getElementById('status');
-
     if (!phone && !sessionId) {
-      statusEl.innerHTML = `
-        <div class="error">
-          Link inválido o expirado.<br><br>
-          Solicita un nuevo link desde WhatsApp escribiendo "conectar banco".
-        </div>
-        <a href="https://wa.me/${WHATSAPP_NUMBER}?text=conectar%20banco" class="whatsapp-btn">
-          📱 Abrir WhatsApp
-        </a>
-      `;
+      showError('Link inválido. Solicita uno nuevo desde WhatsApp.');
     } else {
-      redirectToBelvo();
+      init();
     }
 
-    async function redirectToBelvo() {
-      try {
-        statusEl.innerHTML = `
-          <div class="loading">
-            <div class="spinner"></div>
-            <span>Conectando con tu banco...</span>
-          </div>
-        `;
+    async function init() {
+      showLoading('Preparando conexión...');
 
-        // Fetch widget token from our API
+      try {
+        // 1. Fetch token
         const response = await fetch(`${API_URL}/api/bank/widget-token?phone=${phone || ''}&session=${sessionId || ''}`, {
-          method: 'GET',
-          mode: 'cors',
-          headers: { 'Accept': 'application/json' }
+          method: 'GET', mode: 'cors', headers: { 'Accept': 'application/json' }
         });
         const data = await response.json();
 
@@ -187,29 +96,85 @@
           throw new Error(data.error || 'No se pudo obtener el token');
         }
 
-        // Redirect to Belvo's hosted widget (sandbox for now)
-        const belvoUrl = new URL('https://connect.sandbox.belvo.com/');
-        belvoUrl.searchParams.set('access_token', data.token);
-        belvoUrl.searchParams.set('institution_types', 'retail');
-        belvoUrl.searchParams.set('country_codes', 'CO,MX,BR');
-        belvoUrl.searchParams.set('external_id', data.phone || phone);
-        belvoUrl.searchParams.set('redirect_uri', `https://monedita.app/bank-success.html?phone=${data.phone || phone}`);
+        // 2. Load Belvo SDK dynamically
+        showLoading('Cargando widget bancario...');
+        await loadBelvoSDK();
 
-        // Redirect to Belvo
-        window.location.href = belvoUrl.toString();
+        // 3. Show connect button
+        statusEl.innerHTML = `
+          <button class="connect-btn" onclick="openWidget('${data.token}', '${data.phone || phone}')">
+            🏦 Conectar mi banco
+          </button>
+          <div class="debug">Token listo ✓</div>
+        `;
 
       } catch (error) {
-        console.error('Error:', error);
-        statusEl.innerHTML = `
-          <div class="error">
-            ${error.message || 'Error de conexión'}<br><br>
-            Por favor, solicita un nuevo link.
-          </div>
-          <a href="https://wa.me/${WHATSAPP_NUMBER}?text=conectar%20banco" class="whatsapp-btn">
-            📱 Solicitar nuevo link
-          </a>
-        `;
+        showError(error.message);
       }
+    }
+
+    function loadBelvoSDK() {
+      return new Promise((resolve, reject) => {
+        if (window.belvoSDK) {
+          resolve();
+          return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://cdn.belvo.io/belvo-widget-1-stable.js';
+        script.onload = () => {
+          setTimeout(resolve, 500); // Wait a bit for SDK to initialize
+        };
+        script.onerror = () => reject(new Error('No se pudo cargar el widget'));
+        document.head.appendChild(script);
+      });
+    }
+
+    function openWidget(token, userPhone) {
+      showLoading('Abriendo conexión bancaria...');
+
+      try {
+        belvoSDK.createWidget(token, {
+          callback: (link, institution) => {
+            showSuccess(institution);
+          },
+          onExit: (data) => {
+            if (!data || !data.link) {
+              statusEl.innerHTML = `
+                <div class="error">Conexión cancelada</div>
+                <button class="connect-btn" onclick="openWidget('${token}', '${userPhone}')">
+                  🔄 Intentar de nuevo
+                </button>
+              `;
+            }
+          },
+          onEvent: (event) => {
+            console.log('Belvo:', event);
+          }
+        }).build();
+      } catch (e) {
+        showError('Error al abrir widget: ' + e.message);
+      }
+    }
+
+    function showLoading(msg) {
+      statusEl.innerHTML = `<div class="loading"><div class="spinner"></div><span>${msg}</span></div>`;
+    }
+
+    function showError(msg) {
+      statusEl.innerHTML = `
+        <div class="error">${msg}</div>
+        <a href="https://wa.me/${WHATSAPP_NUMBER}?text=conectar%20banco" class="whatsapp-btn">📱 Solicitar nuevo link</a>
+      `;
+    }
+
+    function showSuccess(institution) {
+      statusEl.innerHTML = `
+        <div class="success">
+          <strong>✅ ¡Banco conectado!</strong>
+          ${institution || 'Tu banco'} se ha vinculado correctamente.
+        </div>
+        <a href="https://wa.me/${WHATSAPP_NUMBER}?text=sincronizar%20banco" class="whatsapp-btn">📱 Sincronizar transacciones</a>
+      `;
     }
   </script>
 </body>
