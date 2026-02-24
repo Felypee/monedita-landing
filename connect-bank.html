@@ -133,17 +133,17 @@
       showLoading('Abriendo conexión bancaria...');
 
       try {
-        belvoSDK.createWidget(token, {
-          // Required parameters
-          locale: 'es',
-          country_codes: ['CO', 'MX', 'BR'],
-          access_mode: 'recurrent',
+        // Debug: log the token
+        console.log('Belvo token (first 50):', token?.substring(0, 50));
 
-          // Callbacks
+        const config = {
+          // Callbacks (required)
           callback: (link, institution) => {
+            console.log('Belvo success:', link, institution);
             showSuccess(institution);
           },
           onExit: (data) => {
+            console.log('Belvo exit:', data);
             if (!data || !data.link) {
               statusEl.innerHTML = `
                 <div class="error">Conexión cancelada</div>
@@ -154,10 +154,17 @@
             }
           },
           onEvent: (event) => {
-            console.log('Belvo:', event);
+            console.log('Belvo event:', event);
           }
-        }).build();
+        };
+
+        console.log('Creating widget with config:', config);
+        const widget = belvoSDK.createWidget(token, config);
+        console.log('Widget created, calling build()...');
+        widget.build();
+        console.log('Widget build() called');
       } catch (e) {
+        console.error('Widget error:', e);
         showError('Error al abrir widget: ' + e.message);
       }
     }
