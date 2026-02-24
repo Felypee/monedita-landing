@@ -134,6 +134,11 @@
 
       try {
         belvoSDK.createWidget(token, {
+          // Required parameters
+          locale: 'es',
+          country_codes: ['CO', 'MX', 'BR'],
+
+          // Callbacks
           callback: (link, institution) => {
             showSuccess(institution);
           },
