@@ -146,6 +146,9 @@
           // Only show banking institutions (not fiscal/employment)
           institution_types: ['retail', 'business'],
 
+          // Specific sandbox institutions for testing
+          institutions: ['ofmockbank_br_retail', 'erebor_mx_retail'],
+
           // Callbacks (required)
           callback: (link, institution) => {
             console.log('Belvo success:', link, institution);
