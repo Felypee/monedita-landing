@@ -186,7 +186,13 @@
     async function initWidget() {
       try {
         // Fetch widget token from our API
-        const response = await fetch(`${API_URL}/api/bank/widget-token?phone=${phone || ''}&session=${sessionId || ''}`);
+        const response = await fetch(`${API_URL}/api/bank/widget-token?phone=${phone || ''}&session=${sessionId || ''}`, {
+          method: 'GET',
+          mode: 'cors',
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
         const data = await response.json();
 
         if (!response.ok || !data.token) {
