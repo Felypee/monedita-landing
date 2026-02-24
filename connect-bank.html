@@ -143,6 +143,9 @@
           // Country configuration
           country_codes: ['CO', 'MX', 'BR'],
 
+          // Only show banking institutions (not fiscal/employment)
+          institution_types: ['retail', 'business'],
+
           // Callbacks (required)
           callback: (link, institution) => {
             console.log('Belvo success:', link, institution);
