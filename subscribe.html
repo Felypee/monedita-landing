@@ -537,7 +537,7 @@
                 const cardToken = await tokenizeCard({
                     number: cardNumber,
                     exp_month: expMonth,
-                    exp_year: '20' + expYear,
+                    exp_year: expYear,  // Wompi expects 2 digits (e.g., "28" not "2028")
                     cvc: cardCvc,
                     card_holder: cardHolder,
                 });
