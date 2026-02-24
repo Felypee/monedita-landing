@@ -195,9 +195,15 @@
 
         statusEl.style.display = 'none';
 
+        // Show debug info
+        const debugInfo = document.createElement('div');
+        debugInfo.style.cssText = 'font-size:10px;color:#999;margin:10px 0;word-break:break-all;';
+        debugInfo.innerHTML = `Token: ${data.token.substring(0, 50)}...`;
+        statusEl.parentNode.insertBefore(debugInfo, statusEl);
+
         // Initialize Belvo widget using the correct method
         // See: https://developers.belvo.com/docs/connect-widget
-        belvoSDK.createWidget(data.token, {
+        const widget = belvoSDK.createWidget(data.token, {
           locale: 'es',
           company_name: 'Monedita',
           country_codes: ['CO', 'MX', 'BR'],
@@ -231,14 +237,21 @@
           onEvent: function(event) {
             console.log('Belvo event:', event);
           }
-        }).build();
+        });
+
+        debugInfo.innerHTML += '<br>Widget creado, construyendo...';
+        widget.build();
+        debugInfo.innerHTML += '<br>Widget construido OK';
 
       } catch (error) {
         console.error('Widget error:', error);
         statusEl.innerHTML = `
           <div class="error">
-            ${error.message || 'Error de conexión'}<br><br>
-            Por favor, solicita un nuevo link desde WhatsApp.
+            <strong>Error:</strong><br>
+            ${error.message || 'Error desconocido'}<br><br>
+            <small style="word-break: break-all; color: #666;">
+              ${error.stack || error.toString()}
+            </small>
           </div>
           <a href="https://wa.me/${WHATSAPP_NUMBER}?text=conectar%20banco" class="whatsapp-btn">
             📱 Solicitar nuevo link
@@ -246,6 +259,24 @@
         `;
       }
     }
+
+    // Global error handler
+    window.onerror = function(msg, url, line, col, error) {
+      statusEl.innerHTML = `
+        <div class="error">
+          <strong>Error Global:</strong><br>
+          ${msg}<br>
+          Línea: ${line}<br><br>
+          <small style="word-break: break-all; color: #666;">
+            ${error ? error.stack : 'Sin detalles'}
+          </small>
+        </div>
+        <a href="https://wa.me/${WHATSAPP_NUMBER}?text=conectar%20banco" class="whatsapp-btn">
+          📱 Solicitar nuevo link
+        </a>
+      `;
+      return true;
+    };
   </script>
 </body>
 </html>
